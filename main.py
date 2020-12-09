@@ -14,7 +14,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def train_valid(unet_model, densenet_model, config, data_loader):
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
+    optimizer = torch.optim.Adam(unet_model.parameters(), lr=config.lr)
     result_file_path = './result/'+time.strftime('%m%d_%H%M_%S',time.localtime(time.time()))+'_results.csv'
     #将信息写入csv文件中
     with open(result_file_path, 'w') as f:
@@ -33,7 +33,7 @@ def train_valid(unet_model, densenet_model, config, data_loader):
         for i, (src_img, tgt_img, label) in enumerate(data_loader):
             src_img = src_img.to(device)
             tgt_img = tgt_img.to(device)
-
+            label = label.to(device)
             #forward
             output = unet_model(src_img)
             loss = criterion(output, tgt_img)
@@ -70,7 +70,13 @@ def train_valid(unet_model, densenet_model, config, data_loader):
         tgt_img_correct_acc = tgt_img_correct/total
         src_trans_img_correct_acc = src_trans_img_correct/total
         avg_loss = total_loss/total
-        if 
+        if src_trans_img_max_acc<src_trans_img_correct_acc:
+            src_trans_img_max_acc = src_trans_img_correct_acc
+            print("New max acc: %.4f" % src_trans_img_max_acc)
+            torch.save(unet_model.state_dict(), './result/unet_model.dat')
+        with open(result_file_path, 'a') as f:
+            f.write('%03d,%.6f,%.4f,%.4f' %(epoch, avg_loss, tgt_img_correct_acc, src_trans_img_correct_acc))
+        
 
 def load_data(config):
     mean = [0.5,]
@@ -99,6 +105,7 @@ if __name__ == "__main__":
     unet_model = UNet(3, 3, bilinear=True)
     unet_model = unet_model.to(device)
     #载入训练好的densenet模型
-    densenet_model = torch.load("densenet_model.pkl")
+    densenet_model = torch.load("./densenet_model/densenet_model.pkl")
+    densenet_model = densenet_model.to(device)
     if config.train:
         train_valid(unet_model, densenet_model, config, data_loader)

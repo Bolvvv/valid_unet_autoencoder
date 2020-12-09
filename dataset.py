@@ -24,7 +24,12 @@ class CustomDataset(Dataset):
         #对图片进行预处理
         src_img = self.src_transform(src_img)
         tgt_img = self.tgt_transform(tgt_img)
-        
+        label = int(label)
+        #将label中的0和1归为一类
+        if label == 0 or label == 1:
+            label = 0
+        else:
+            label = 1
         return src_img, tgt_img, label
     
     def __len__(self):
