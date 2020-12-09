@@ -75,7 +75,7 @@ def train_valid(unet_model, densenet_model, config, data_loader):
             print("New max acc: %.4f" % src_trans_img_max_acc)
             torch.save(unet_model.state_dict(), './result/unet_model.dat')
         with open(result_file_path, 'a') as f:
-            f.write('%03d,%.6f,%.4f,%.4f' %(epoch, avg_loss, tgt_img_correct_acc, src_trans_img_correct_acc))
+            f.write('%03d,%.6f,%.4f,%.4f\n' %(epoch, avg_loss, tgt_img_correct_acc, src_trans_img_correct_acc))
         
 
 def load_data(config):
