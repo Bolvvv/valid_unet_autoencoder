@@ -65,8 +65,8 @@ def train_valid(unet_model, densenet_model, config, data_loader):
 
             #控制台打印参数
             if (i+1) % config.show_n_iter == 0:
-                print('Epoch: [{}/{}], Step: [{}/{}], Loss: {:.6f}'
-                    .format(epoch+1, config.epoches, i+1, total_step, iter_loss))
+                print('Epoch: [{}/{}], Step: [{}/{}], Loss: {:.6f}, tgt_img_correct_acc: {:.4f}, src_trans_img_correct_acc:{:.4f}'
+                    .format(epoch+1, config.epoches, i+1, total_step, iter_loss, iter_tgt_img_correct/iter_img_num, iter_src_trans_img_correct/iter_img_num))
         tgt_img_correct_acc = tgt_img_correct/total
         src_trans_img_correct_acc = src_trans_img_correct/total
         avg_loss = total_loss/total
