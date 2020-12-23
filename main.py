@@ -22,7 +22,6 @@ def train_valid(unet_model, densenet_model, config, data_loader):
         f.write('epoch,train_loss,tgt_acc,src_trans_acc\n')
 
     unet_model.train()
-    densenet_model.eval()
     src_trans_img_max_acc = 0#densenet预测的转换图片的最高准确率
     for epoch in range(config.epoches):
         total_step = len(data_loader)
@@ -42,14 +41,18 @@ def train_valid(unet_model, densenet_model, config, data_loader):
             loss.backward()
             optimizer.step()
 
-            #densenet预测tgt_img
-            densenet_tgt_img_out = densenet_model(tgt_img)
-            _, tgt_img_predicted = torch.max(densenet_tgt_img_out.data, 1)
-            
-
-            #densenet预测src_trans_img
-            densenet_src_trans_img_out = densenet_model(output)
-            _, src_trans_img_predicted = torch.max(densenet_src_trans_img_out.data, 1)
+            with torch.no_grad():
+                #将densenet模型载入gpu
+                densenet_model = densenet_model.to(device)
+                #densenet预测tgt_img
+                densenet_tgt_img_out = densenet_model(tgt_img)
+                _, tgt_img_predicted = torch.max(densenet_tgt_img_out.data, 1)
+                
+                #densenet预测src_trans_img
+                densenet_src_trans_img_out = densenet_model(output)
+                _, src_trans_img_predicted = torch.max(densenet_src_trans_img_out.data, 1)
+                #将densenet模型载入cpu，以此减少显存开销
+                densenet_model.to("cpu")
 
             #展示参数
             #此次iter的参数
@@ -82,12 +85,12 @@ def load_data(config):
     mean = [0.5,]
     stdv = [0.2,]
     src_transform = transforms.Compose([
-        transforms.Resize((640, 480)),
+        transforms.Resize((320, 240)),
         transforms.ToTensor(),
         transforms.Normalize(mean=mean, std=stdv),
     ])
     tgt_transform = transforms.Compose([
-        transforms.Resize((640, 480)),
+        transforms.Resize((320, 240)),
         transforms.ToTensor(),
         transforms.Normalize(mean=mean, std=stdv),
     ])
@@ -98,14 +101,27 @@ def load_data(config):
                                                pin_memory=(torch.cuda.is_available()))
     return data_loader
 
+#生成单张图片
+def generate_img(model, img_path, out_img_path):
+    #模型载入
+    model.load_state_dict(torch.load('./result/unet_model.dat'))
+    #tensor和PIL相互转化
+    loader = transforms.Compose([transforms.ToTensor()])
+    unloader = transforms.ToPILImage()
+    
+    img = Image.open(img_path)#PIL图片
+    tensor_img = loader(img).unsqueeze(0).to(device)#转换为tensor
+    out = model(tensor_img)#输出图片
+    pil_img = unloader(out.squeeze(0))#转换为PIL图片
+    pil_img.save(out_img_path)
+
 if __name__ == "__main__":
     config = TrainingConfig
     data_loader = load_data(config)
     #待训练unet模型
     unet_model = UNet(3, 3, bilinear=True)
     unet_model = unet_model.to(device)
-    #载入训练好的densenet模型
     densenet_model = torch.load("./densenet_model/densenet_model.pkl")
-    densenet_model = densenet_model.to(device)
     if config.train:
         train_valid(unet_model, densenet_model, config, data_loader)
+    # generate_img(unet_model, "0913_1_1.jpg", "hhh.jpg")
