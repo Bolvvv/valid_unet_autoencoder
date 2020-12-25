@@ -5,8 +5,10 @@ from PIL import Image
 import os
 
 class CustomDataset(Dataset):
-    def __init__(self, filename, src_dir, tgt_dir, src_transform, tgt_transform):
-        self.image_label_list = self.read_file(filename)
+    def __init__(self, data_set_list, src_dir, tgt_dir, src_transform, tgt_transform):
+        self.image_label_list = []
+        for filename in data_set_list:
+            self.image_label_list += self.read_file(filename)
         self.src_dir = src_dir
         self.tgt_dir = tgt_dir
         self.len = len(self.image_label_list)

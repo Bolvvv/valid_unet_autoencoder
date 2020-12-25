@@ -94,7 +94,9 @@ def load_data(config):
         transforms.ToTensor(),
         transforms.Normalize(mean=mean, std=stdv),
     ])
-    data_set = CustomDataset(filename="../data/deepbc/valid_autoencoder_labels/data.txt", src_dir="../data/deepbc/usg_images_cutted_p1", tgt_dir="../data/deepbc/usg_images_cutted_v3", src_transform=src_transform, tgt_transform=tgt_transform)
+    label_path = "../data/deepbc/labels_1218/"
+    dataset_list = [label_path+"train_BX.txt", label_path+"train_CMGH.txt", label_path+"train_Malignant_DeYang.txt"]
+    data_set = CustomDataset(data_set_list=dataset_list, src_dir="../data/deepbc/usg_images_cutted_p1", tgt_dir="../data/deepbc/usg_images_cutted_v3", src_transform=src_transform, tgt_transform=tgt_transform)
 
     #载入训练数据
     data_loader = torch.utils.data.DataLoader(data_set, batch_size=config.batch_size, shuffle=True,
