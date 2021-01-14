@@ -19,7 +19,7 @@ def train_valid(unet_model, densenet_model, config, data_loader):
     #将信息写入csv文件中
     with open(result_file_path, 'w') as f:
         f.write('batch_size %d, lr %f, epoches %d, start_time %s\n' % (config.batch_size, config.lr, config.epoches, time.strftime('%m-%d %H:%M:%S',time.localtime(time.time()))))
-        f.write('epoch,train_loss,tgt_acc,src_trans_acc\n')
+        f.write('epoch,train_loss,src_trans_acc\n')
 
     unet_model.train()
     src_trans_img_max_acc = 0#densenet预测的转换图片的最高准确率
@@ -45,8 +45,8 @@ def train_valid(unet_model, densenet_model, config, data_loader):
                 #将densenet模型载入gpu
                 densenet_model = densenet_model.to(device)
                 #densenet预测tgt_img
-                densenet_tgt_img_out = densenet_model(tgt_img)
-                _, tgt_img_predicted = torch.max(densenet_tgt_img_out.data, 1)
+                # densenet_tgt_img_out = densenet_model(tgt_img)
+                # _, tgt_img_predicted = torch.max(densenet_tgt_img_out.data, 1)
                 
                 #densenet预测src_trans_img
                 densenet_src_trans_img_out = densenet_model(output)
@@ -57,19 +57,19 @@ def train_valid(unet_model, densenet_model, config, data_loader):
             #展示参数
             #此次iter的参数
             iter_img_num = src_img.size(0)
-            iter_tgt_img_correct = (tgt_img_predicted == label).sum().item()
+            # iter_tgt_img_correct = (tgt_img_predicted == label).sum().item()
             iter_src_trans_img_correct = (src_trans_img_predicted == label).sum().item()
             iter_loss = loss
             #一次epoch的总参数
             total += iter_img_num
-            tgt_img_correct += iter_tgt_img_correct
+            # tgt_img_correct += iter_tgt_img_correct
             src_trans_img_correct += iter_src_trans_img_correct
             total_loss += iter_loss * iter_img_num
 
             #控制台打印参数
             if (i+1) % config.show_n_iter == 0:
-                print('Epoch: [{}/{}], Step: [{}/{}], Loss: {:.6f}, tgt_img_correct_acc: {:.4f}, src_trans_img_correct_acc:{:.4f}'
-                    .format(epoch+1, config.epoches, i+1, total_step, iter_loss, iter_tgt_img_correct/iter_img_num, iter_src_trans_img_correct/iter_img_num))
+                print('Epoch: [{}/{}], Step: [{}/{}], Loss: {:.6f}, src_trans_img_correct_acc:{:.4f}'
+                    .format(epoch+1, config.epoches, i+1, total_step, iter_loss, iter_src_trans_img_correct/iter_img_num))
         tgt_img_correct_acc = tgt_img_correct/total
         src_trans_img_correct_acc = src_trans_img_correct/total
         avg_loss = total_loss/total
